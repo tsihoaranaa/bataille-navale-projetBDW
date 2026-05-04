@@ -1,0 +1,80 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+{% extends "base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<section class="content-card">
+    <h1>
+        Bienvenue sur BatNav Cards
+        {% if SESSION and SESSION['joueur'] %}
+        {{ SESSION['joueur']['pseudo'] }}
+        {% endif %}
+    </h1>
+
+    {% if SESSION and SESSION['joueur'] %}
+
+    <div class="action-buttons">
+        <a class="btn btn-primary" href="{{ url_for('parties') }}">Voir tes parties</a>
+        <a class="btn btn-secondary" href="{{ url_for('deconnexion') }}">Se déconnecter</a>
+    </div>
+
+    <section class="stats-section">
+        <h2>Statistiques</h2>
+        <ul>
+            <li>Total de joueurs : {{ REQUEST_VARS.stats.total_joueurs }}</li>
+            <li>Total de parties : {{ REQUEST_VARS.stats.total_parties }}</li>
+            <li>Parties jouées par vous : {{ REQUEST_VARS.stats.parties_jouees }}</li>
+            <li>État de la session : {% if SESSION.joueur %}connecté{% else %}invité{% endif %}</li>
+        </ul>
+    </section>
+
+    <section class="rules-section">
+        <h2>Règles et Cartes</h2>
+        <p>BatNav Cards est un jeu de stratégie de batailles navales avec cartes spéciales :</p>
+
+        {% if REQUEST_VARS.cartes %}
+        <div class="cards-grid">
+            {% for carte in REQUEST_VARS.cartes %}
+            <article class="card-rule">
+                <header>
+                    <h3>{{ carte.nom }} <small>({{ carte.code_tc }})</small></h3>
+                </header>
+                <p>{{ carte.description }}</p>
+                {% if carte.image %}
+                <figure>
+                    <img src="{{ url_for('static', filename='images/' ~ carte.image) }}" alt="{{ carte.nom }}"
+                        class="card-image">
+                </figure>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <ul>
+            <li>MISSILE : Cette carte permet de tirer un missile classique</li>
+            <li>REJOUE : Cette carte permet de rejouer</li>
+            <li>VIDE : Cette carte indique si une case est vide</li>
+            <li>MPM : Cette carte annule un dégât et déplace un navire</li>
+            <li>LEURRE : Cette carte place un bateau leurre</li>
+            <li>WILLY : Cette carte place une orque</li>
+            <li>MEGA : Cette carte remplace le missile par une méga-bombe</li>
+            <li>ETOILE : Cette carte remplace le missile par un tir de zone</li>
+            <li>PASSE : Le joueur perd son tour</li>
+            <li>OUPS : Le missile échappe et touche un de vos navires</li>
+        </ul>
+        {% endif %}
+
+        </br></br>
+
+        <h2>Chaque joueur place ses navires, puis joue à tour de rôle. Le premier à couler tous les bateaux adverses
+            gagne.</h2>
+    </section>
+</section>
+
+{% else %}
+<p>Connecte-toi pour découvrir les règles du jeu et commencer à jouer !</p>
+<a class="btn btn-primary" href="{{ url_for('connexion') }}">Se connecter</a>
+
+{% endif %}
+{% endblock %}

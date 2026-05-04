@@ -1,0 +1,56 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+{% if REQUEST_VARS and REQUEST_VARS.get('redirect') %}
+  <meta http-equiv="refresh" content="0; url={{ REQUEST_VARS['redirect'] }}">
+{% endif %}
+<section class="content-card">
+    <div class="connexion-page">
+        <h1>Connexion</h1>
+        <p class="connexion-intro">Recherchez votre pseudo ou créez un nouveau joueur pour accéder à l'application.</p>
+
+        {% if REQUEST_VARS and REQUEST_VARS.get('error') %}
+        <p class="alert alert--error">{{ REQUEST_VARS.get('error') }}</p>
+        {% endif %}
+
+        <div class="connexion-grid">
+            <div class="connexion-box">
+                <h2>Rechercher un joueur</h2>
+                <form method="get" action="{{ url_for('connexion') }}" class="connexion-form">
+                    <label for="pseudo_search">Pseudo</label>
+                    <input id="pseudo_search" type="text" name="pseudo_search" placeholder="ex: robin" required>
+                    <button type="submit" class="btn btn-primary">Se connecter</button>
+                </form>
+            </div>
+
+            <div class="connexion-box">
+                <h2>Créer un joueur</h2>
+                <form method="post" action="{{ url_for('connexion') }}" class="connexion-form">
+                    <label for="nom_create">Nom</label>
+                    <input id="nom_create" type="text" name="nom_create" required>
+                    <label for="prenom_create">Prénom</label>
+                    <input id="prenom_create" type="text" name="prenom_create" required>
+                    <label for="date_naissance_create">Date de naissance</label>
+                    <input id="date_naissance_create" type="date" name="date_naissance_create" required>
+                    <label for="pseudo_create">Pseudo</label>
+                    <input id="pseudo_create" type="text" name="pseudo_create" required>
+                    <button type="submit" class="btn btn-secondary">Créer le compte</button>
+                </form>
+            </div>
+        </div>
+
+        {% if REQUEST_VARS and REQUEST_VARS.get('resultat') %}
+        <p class="connexion-state">Joueur trouvé : <strong>{{ REQUEST_VARS['resultat']['pseudo'] }}</strong></p>
+        {% endif %}
+
+        {% if SESSION and SESSION['joueur'] %}
+        <p class="connexion-state">Connecté en tant que : <strong>{{ SESSION['joueur']['pseudo'] }}</strong></p>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+

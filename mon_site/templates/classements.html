@@ -1,0 +1,92 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+{% extends "base.html" %}
+{% block title %}Classements — BatNav Cards{% endblock %}
+
+{% block content %}
+<section class="content-card parties-page">
+    <h1>Classements</h1>
+    <p class="parties-lead">
+        Les classements suivent le sujet: IJH (joueurs humains) et CPP (pavillons nationaux).
+    </p>
+
+    <div class="parties-panel">
+        <form method="GET" action="{{ url_for('classements') }}" class="parties-form parties-form--compact">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="delta">Fenêtre δ (mois)</label>
+                    <input id="delta" type="text" name="delta" value="{{ REQUEST_VARS.delta }}" placeholder="0 = historique complet">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" type="submit">Actualiser</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="parties-panel parties-panel--table">
+        <h2>IJH — Individuel Joueurs Humains</h2>
+        <div class="parties-table-wrap">
+            <table class="parties-data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Pseudo</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Score cumulé</th>
+                        <th>Parties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in REQUEST_VARS.classement_ijh %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ r.pseudo }}</td>
+                        <td>{{ r.nom }}</td>
+                        <td>{{ r.prenom }}</td>
+                        <td>{{ r.score_cumule }}</td>
+                        <td>{{ r.nb_parties }}</td>
+                    </tr>
+                    {% else %}
+                    <tr class="parties-data-table__empty">
+                        <td colspan="6">Aucune donnée pour ce classement.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="parties-panel parties-panel--table">
+        <h2>CPP — Classement Par Pavillon</h2>
+        <div class="parties-table-wrap">
+            <table class="parties-data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Code</th>
+                        <th>Nation</th>
+                        <th>Score cumulé</th>
+                        <th>Parties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in REQUEST_VARS.classement_cpp %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ r.code_pays }}</td>
+                        <td>{{ r.nom_pays }}</td>
+                        <td>{{ r.score_cumule }}</td>
+                        <td>{{ r.nb_parties }}</td>
+                    </tr>
+                    {% else %}
+                    <tr class="parties-data-table__empty">
+                        <td colspan="5">Classement non disponible (tables pavillon/flottille incomplètes ou aucune donnée).</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

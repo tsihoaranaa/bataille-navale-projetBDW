@@ -1,0 +1,14 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+<nav class="site-nav">
+    <ul class="nav-list">
+        <li><a href="{{ url_for('accueil') }}">Accueil</a></li>
+        <li><a href="{{ url_for('parties') }}">Parties</a></li>
+        {% if SESSION.get('partie_en_cours') %}
+        <li><a href="{{ url_for('jeu') }}">Jeu</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('classements') }}">Classements</a></li>
+        {% if not SESSION['joueur']%}
+        <li><a href="{{ url_for('connexion') }}">Connexion</a></li>
+        {% endif %}
+    </ul>
+</nav>

@@ -1,0 +1,136 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+{% extends "base.html" %}
+
+{% block title %}Parties{% endblock %}
+
+{% block content %}
+<section class="content-card parties-page">
+    {% if REQUEST_VARS.get('error_msg') %}
+        <div class="alert alert--error" role="alert">
+            <strong>Erreur détectée dans le contrôleur :</strong><br>{{ REQUEST_VARS.error_msg }}
+        </div>
+    {% endif %}
+
+    <h1>Gestion des parties</h1>
+
+    {% if SESSION and SESSION['joueur'] %}
+
+        <div class="action-buttons parties-toolbar">
+            <a class="btn btn-secondary" href="{{ url_for('deconnexion') }}">Se déconnecter</a>
+        </div>
+
+        <section class="parties-panel" id="nouvelle-partie">
+            <h2>Nouvelle partie</h2>
+            <p class="parties-lead">Choisissez un adversaire virtuel (niveau faible, moyen ou expert), puis créez la partie. La date, l&rsquo;heure et l&rsquo;identifiant de l&rsquo;adversaire sont enregistrés en base.</p>
+            <form method="POST" action="{{ url_for('parties') }}" class="parties-form">
+                <input type="hidden" name="action" value="creer_partie">
+                <div class="form-group">
+                    <label for="adversaire">Adversaire virtuel</label>
+                    <select name="adversaire" id="adversaire">
+                        <option value="">— Aucun (partie sans adversaire virtuel) —</option>
+                        {% if REQUEST_VARS.get('joueurs_virtuels') %}
+                            {% for jv in REQUEST_VARS['joueurs_virtuels'] %}
+                                <option value="{{ jv.id_j }}">{{ jv.pseudo }} — {% if jv.niveau_expertise == 1 %}Faible{% elif jv.niveau_expertise == 2 %}Moyen{% elif jv.niveau_expertise == 3 %}Expert{% else %}Niveau {{ jv.niveau_expertise }}{% endif %}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Créer la partie</button>
+            </form>
+        </section>
+
+        <section class="parties-panel" id="adversaires">
+            <h2>Adversaires virtuels</h2>
+            {% if REQUEST_VARS.get('joueurs_virtuels') %}
+                <ul class="virt-grid">
+                    {% for jv in REQUEST_VARS['joueurs_virtuels'] %}
+                        <li class="virt-card">
+                            <span class="virt-card__name">{{ jv.pseudo }}</span>
+                            <span class="virt-card__meta">
+                                {% if jv.niveau_expertise == 1 %}<span class="badge badge--faible">Faible</span>{% elif jv.niveau_expertise == 2 %}<span class="badge badge--moyen">Moyen</span>{% elif jv.niveau_expertise == 3 %}<span class="badge badge--expert">Expert</span>{% else %}<span class="badge">{{ jv.niveau_expertise }}</span>{% endif %}
+                                <span class="virt-card__id">#{{ jv.id_j }}</span>
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="parties-muted">Aucun adversaire virtuel disponible.</p>
+            {% endif %}
+
+            <h3 class="parties-subtitle">Créer un nouveau joueur virtuel</h3>
+            <form method="POST" action="{{ url_for('parties') }}" class="parties-form parties-form--compact">
+                <input type="hidden" name="action" value="creer_virtuel">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pseudo_virtuel">Pseudo</label>
+                        <input type="text" name="pseudo_virtuel" id="pseudo_virtuel" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="niveau">Niveau</label>
+                        <select name="niveau" id="niveau" required>
+                            <option value="1">Faible</option>
+                            <option value="2">Moyen</option>
+                            <option value="3">Expert</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-secondary">Créer l&rsquo;adversaire</button>
+            </form>
+        </section>
+
+        <section class="parties-panel parties-panel--table" id="parties-en-cours-table">
+            <h2>Parties en cours</h2>
+            <p class="parties-table-intro">Parties actives pour <strong>{{ SESSION['joueur'].pseudo }}</strong> — données issues de la base.</p>
+
+            <div class="parties-table-wrap">
+            <table class="parties-data-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Créée le</th>
+                        <th rowspan="2">à</th>
+                        <th rowspan="2" class="parties-data-table__th-pseudo">Pseudo</th>
+                        <th rowspan="2">Niveau</th>
+                        <th rowspan="2">Tour</th>
+                        <th colspan="2">Joueur courant</th>
+                        <th colspan="2">Adversaire</th>
+                        <th rowspan="2">Action</th>
+                    </tr>
+                    <tr>
+                        <th>Nb coulés</th>
+                        <th>Nb touchés</th>
+                        <th>Nb coulés</th>
+                        <th>Nb touchés</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for partie in REQUEST_VARS.get('parties', []) %}
+                    <tr>
+                        <td>{% if partie.date_creation %}{{ partie.date_creation.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</td>
+                        <td>{% if partie.heure_creation %}{{ partie.heure_creation.strftime('%H:%M') }}{% else %}—{% endif %}</td>
+                        <td class="parties-data-table__pseudo">{% if partie.pseudo_adversaire %}{{ partie.pseudo_adversaire }}{% else %}—{% endif %}</td>
+                        <td>{% if partie.niveau_adversaire %}{{ partie.niveau_adversaire }}{% else %}—{% endif %}</td>
+                        <td>{{ partie.nb_tours }}</td>
+                        <td>{{ partie.nb_navires_coules_joueur }}</td>
+                        <td>{{ partie.nb_navires_touches_joueur }}</td>
+                        <td>{{ partie.nb_navires_coules_adversaire }}</td>
+                        <td>{{ partie.nb_navires_touches_adversaire }}</td>
+                        <td class="parties-data-table__action">
+                            <a class="btn btn-reprendre" href="{{ url_for('jeu') }}?code_partie={{ partie.code_partie }}">Reprendre</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr class="parties-data-table__empty">
+                        <td colspan="10">Aucune partie en cours.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+    {% else %}
+        <p>Vous devez être connecté pour accéder à vos parties.</p>
+        <a class="btn btn-primary" href="{{ url_for('connexion') }}">Se connecter</a>
+    {% endif %}
+</section>
+{% endblock %}

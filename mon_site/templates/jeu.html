@@ -1,0 +1,326 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+{% extends "base.html" %}
+{% block title %}Jeu — BatNav Cards{% endblock %}
+
+{% block content %}
+<section class="content-card jeu-page">
+
+    {% if not SESSION or not SESSION['joueur'] %}
+        <p class="alert alert--error">Vous devez être connecté pour jouer. <a href="/connexion">Se connecter</a></p>
+    {% else %}
+
+    {# Mapping image par code de cellule — noms ASCII sans accents #}
+    {% set IMG_NAV = {
+        0: 'Cellule_inexplore2.png',
+        1: 'Cellule_eau.png',
+        2: 'Cellule_touche.png',
+        3: 'Cellule_touche.png',
+        4: 'Cellule_navire.png'
+    } %}
+    {% set IMG_TIR = {
+        0: 'Cellule_inexplore1.png',
+        1: 'Cellule_eau.png',
+        2: 'Cellule_touche.png',
+        3: 'Cellule_touche.png'
+    } %}
+
+
+  {% if REQUEST_VARS.phase == 'FINI' %}
+    <div class="jeu-notification notif-success">
+        Partie terminée ! {% if REQUEST_VARS.gagnant %}Gagnant : <strong>{{ REQUEST_VARS.gagnant }}</strong>{% endif %}
+    </div>
+  {% endif %}
+
+
+
+
+
+    <div class="jeu-header">
+        <h1>BatNav Cards</h1>
+        <div class="jeu-header-info">
+            {% if REQUEST_VARS.code_partie %}
+            <span>Partie <strong>#{{ REQUEST_VARS.code_partie }}</strong></span>
+            {% endif %}
+            {% if REQUEST_VARS.pseudo_adversaire %}
+            <span>Adversaire : <strong>{{ REQUEST_VARS.pseudo_adversaire }}</strong>
+                {% if REQUEST_VARS.niveau_adversaire %}
+                <small>({{ REQUEST_VARS.niveau_adversaire }})</small>
+                {% endif %}
+            </span>
+            {% endif %}
+            <span>Tour : <strong><span id="tour-number">{{ REQUEST_VARS.tour_number }}</span></strong></span>
+            {% if REQUEST_VARS.partie_commencee %}
+            <span class="tour-etape">
+                {% if REQUEST_VARS.phase == 'PLACE' %}
+                🚢 Placement de la flottille
+                {% elif REQUEST_VARS.phase == 'DRAW' %}
+                ⏳ En attente d&rsquo;une carte&hellip;
+                {% elif REQUEST_VARS.phase == 'FIRE' %}
+                🎯 Carte piochée &mdash; à vous de tirer !
+                {% else %}
+                🤖 Tour adverse &mdash; cliquez sur Suivant.
+                {% endif %}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if REQUEST_VARS.carte_courante %}
+    <div class="parties-panel carte-courante-panel">
+        <h2>Carte du tour {{ REQUEST_VARS.tour_number }}</h2>
+        <div class="carte-courante">
+            {% if REQUEST_VARS.carte_courante.image_path %}
+            <img src="{{ url_for('static', filename=REQUEST_VARS.carte_courante.image_path) }}"
+                 alt="{{ REQUEST_VARS.carte_courante.nom }}"
+                 class="carte-courante__img">
+            {% endif %}
+            <div class="carte-courante__content">
+                <p><strong>{{ REQUEST_VARS.carte_courante.nom }}</strong> ({{ REQUEST_VARS.carte_courante.code_nom or REQUEST_VARS.carte_courante.code_tc }})</p>
+                <p>{{ REQUEST_VARS.carte_courante.description }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if REQUEST_VARS.message %}
+    <div class="jeu-notification notif-info">{{ REQUEST_VARS.message }}</div>
+    {% endif %}
+
+    {% if REQUEST_VARS.partie_commencee and REQUEST_VARS.phase == 'PLACE' %}
+    <div class="parties-panel">
+        <h2>Flottille et pavillons</h2>
+        <div class="parties-table-wrap">
+            <table class="parties-data-table">
+                <thead>
+                    <tr>
+                        <th>Navire</th>
+                        <th>Type</th>
+                        <th>Taille</th>
+                        <th>Pavillon</th>
+                        <th>Etat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in REQUEST_VARS.flottille %}
+                    <tr>
+                        <td>{{ s.nom }}</td>
+                        <td>{{ s.type }}</td>
+                        <td>{{ s.taille }}</td>
+                        <td>{{ s.pavillon }}</td>
+                        <td>{{ 'Place' if s.place else 'A placer' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="jeu-grilles">
+
+        <!-- Grille navires (mes bateaux) -->
+        <div class="grille-block">
+            <h2>Mes navires</h2>
+            <table class="grille grille-navires">
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for col in REQUEST_VARS.cols %}<th>{{ col }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in REQUEST_VARS.rows %}
+                    <tr>
+                        <th>{{ r }}</th>
+                        {% for c_idx in range(REQUEST_VARS.cols|length) %}
+                        {% set code = REQUEST_VARS.grille_navires[r-1][c_idx] %}
+                        <td class="cell code-{{ code }} cell-navire"
+                            data-col="{{ REQUEST_VARS.cols[c_idx] }}"
+                            data-row="{{ r }}">
+                            {% if code in IMG_NAV %}
+                            <img class="cell-state-img"
+                                 src="{{ url_for('static', filename='images/' ~ IMG_NAV[code]) }}"
+                                 alt="{{ code }}">
+                            {% if REQUEST_VARS.grille_navires_labels[r-1][c_idx] %}
+                            <span class="ship-mark">{{ REQUEST_VARS.grille_navires_labels[r-1][c_idx] }}</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="ship-mark">{{ 'L' if code == 5 else ('W' if code == 6 else '') }}</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Grille tirs (ma vue adversaire) -->
+        <div class="grille-block">
+            <h2>Mes tirs sur l'adversaire</h2>
+            <table class="grille grille-tirs" id="grille-tirs">
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for col in REQUEST_VARS.cols %}<th>{{ col }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in REQUEST_VARS.rows %}
+                    <tr>
+                        <th>{{ r }}</th>
+                        {% for c_idx in range(REQUEST_VARS.cols|length) %}
+                        {% set code = REQUEST_VARS.grille_tirs[r-1][c_idx] %}
+                        <td class="cell cell-cible code-{{ code }}"
+                            data-col="{{ REQUEST_VARS.cols[c_idx] }}"
+                            data-row="{{ r }}">
+                            <img class="cell-state-img"
+                                 src="{{ url_for('static', filename='images/' ~ IMG_TIR[code]) }}"
+                                 alt="{{ code }}">
+                        </td>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- .jeu-grilles -->
+
+    <form method="POST" action="{{ url_for('jeu') }}" class="jeu-actions">
+
+        {% if not REQUEST_VARS.partie_commencee %}
+        <!-- Étape 0 : démarrer la partie -->
+        <button class="btn btn-primary" type="submit" name="action" value="commencer">Commencer la Partie</button>
+
+        {% elif REQUEST_VARS.phase == 'DRAW' %}
+        <!-- Étape 1 : piocher une carte -->
+        <button class="btn btn-pioche" type="submit" name="action" value="piocher">
+            🎴&nbsp;Piocher une carte (Tour {{ REQUEST_VARS.tour_number }})
+        </button>
+
+        {% elif REQUEST_VARS.phase == 'PLACE' %}
+        <div class="form-group">
+            <label for="ship_index">Navire a placer :</label>
+            <select name="ship_index" id="ship_index">
+                {% for s in REQUEST_VARS.navires_non_places %}
+                <option value="{{ s.index }}">{{ s.nom }} ({{ s.taille }} cases, {{ s.pavillon }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="start_coordinates">Placement navire :</label>
+            <input type="text" name="start_coordinates" id="start_coordinates" placeholder="Ex : B4" maxlength="3">
+        </div>
+        <div class="form-group">
+            <label for="placement_direction">Sens :</label>
+            <select name="placement_direction" id="placement_direction">
+                <option value="H">Horizontal</option>
+                <option value="V">Vertical</option>
+            </select>
+        </div>
+        {% if REQUEST_VARS.navire_a_placer %}
+        <span class="tour-etape">
+            A placer: {{ REQUEST_VARS.navire_a_placer.nom }} ({{ REQUEST_VARS.navire_a_placer.taille }} cases, {{ REQUEST_VARS.navire_a_placer.pavillon }})
+        </span>
+        {% endif %}
+        <button class="btn btn-primary" type="submit" name="action" value="placer_navire">Placer navire</button>
+
+        {% elif REQUEST_VARS.phase == 'FIRE' %}
+        <!-- Étape 2 : choisir une cible et tirer -->
+        <div class="form-group">
+            <label for="coordinates">Coordonnées :</label>
+            <input type="text" name="coordinates" id="coordinates" placeholder="Ex : A1" maxlength="3">
+        </div>
+        {% set code_courant = REQUEST_VARS.carte_courante.code_nom if REQUEST_VARS.carte_courante else '' %}
+        {% if code_courant in ['C_LEURRE', 'C_WILLY', 'C_MPM'] %}
+        <div class="form-group">
+            <label for="placement_coordinates">Placement (ma grille) :</label>
+            <input type="text" name="placement_coordinates" id="placement_coordinates" placeholder="Ex : B4" maxlength="3">
+        </div>
+        {% if code_courant in ['C_LEURRE', 'C_MPM'] %}
+        <div class="form-group">
+            <label for="placement_direction">Sens :</label>
+            <select name="placement_direction" id="placement_direction">
+                <option value="H">Horizontal</option>
+                <option value="V">Vertical</option>
+            </select>
+        </div>
+        {% endif %}
+        {% endif %}
+        <button class="btn btn-primary" type="submit" name="action" value="tirer">Tirer</button>
+        {% else %}
+        <!-- Étape 3 : tour adverse -->
+        <button class="btn btn-secondary" type="submit" name="action" value="suivant">Suivant (tour adverse)</button>
+        {% endif %}
+
+        <button class="btn btn-danger" type="submit" name="action" value="suspendre">Suspendre la Partie</button>
+    </form>
+
+    <div class="parties-panel parties-panel--table">
+        <h2>Historique du tour</h2>
+        <div class="parties-table-wrap">
+            <table class="parties-data-table">
+                <thead>
+                    <tr>
+                        <th>Tour</th>
+                        <th>Joueur</th>
+                        <th>Carte</th>
+                        <th>Coordonnée</th>
+                        <th>Impacts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in REQUEST_VARS.historique %}
+                    <tr>
+                        <td>{{ h.tour }}</td>
+                        <td>{{ h.joueur }}</td>
+                        <td>{{ h.carte }}</td>
+                        <td>{{ h.coord }}</td>
+                        <td>{% if h.impacts %}{{ h.impacts | join(', ') }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% else %}
+                    <tr class="parties-data-table__empty">
+                        <td colspan="5">Aucun tir enregistré pour l'instant.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% endif %}
+</section>
+
+<script>
+const cartePiochee = {{ 'true' if REQUEST_VARS.phase == 'FIRE' else 'false' }};
+document.querySelectorAll('.cell-cible').forEach((cell) => {
+    if (!cartePiochee) {
+        cell.style.cursor = 'default';
+        return;
+    }
+    cell.addEventListener('click', () => {
+        document.querySelectorAll('.cell-cible').forEach((c) => c.classList.remove('selected'));
+        cell.classList.add('selected');
+        const input = document.getElementById('coordinates');
+        if (input) {
+            input.value = `${cell.dataset.col}${cell.dataset.row}`;
+        }
+    });
+});
+
+document.querySelectorAll('.cell-navire').forEach((cell) => {
+    cell.addEventListener('click', () => {
+        const inputSpecial = document.getElementById('placement_coordinates');
+        if (inputSpecial) {
+            inputSpecial.value = `${cell.dataset.col}${cell.dataset.row}`;
+        }
+        const inputStart = document.getElementById('start_coordinates');
+        if (inputStart) {
+            inputStart.value = `${cell.dataset.col}${cell.dataset.row}`;
+        }
+    });
+});
+</script>
+{% endblock %}

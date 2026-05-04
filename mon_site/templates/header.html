@@ -1,0 +1,20 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+<header class="site-header">
+    <div class="header-container">
+        <a href="{{ url_for('accueil') }}" class="brand">
+            <img src="{{ url_for('static', filename='images/logo-batnav.svg') }}" alt="Logo BatNav" class="brand-logo">
+            <div class="brand-text">
+                <span class="brand-title">BatNav</span>
+                <span class="brand-subtitle">Bataille navale à cartes bonus / malus</span>
+            </div>
+        </a>
+
+        <div class="header-user">
+            {% if SESSION and SESSION['joueur'] %}
+                <span class="welcome-text">Bienvenue {{ SESSION['joueur']['pseudo'] }}</span>
+            {% else %}
+                <span class="welcome-text">Mode invité</span>
+            {% endif %}
+        </div>
+    </div>
+</header>

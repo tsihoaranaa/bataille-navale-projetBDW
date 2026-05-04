@@ -1,0 +1,36 @@
+# Routes configuration BatNav (converti pour bdw-server)
+
+[[routes]]
+url = ""
+controleur = "controlleur/accueil.py"
+template = "accueil.html"
+
+[[routes]]
+url = "accueil"
+controleur = "controlleur/accueil.py"
+template = "accueil.html"
+
+[[routes]]
+url = "connexion"
+controleur = "controlleur/connexion.py"
+template = "connexion.html"
+
+[[routes]]
+url = "jeu"
+controleur = "controlleur/jeu.py"
+template = "jeu.html"
+
+[[routes]]
+url = "deconnexion"
+controleur = "controlleur/deconnexion.py"
+template = "accueil.html"
+
+[[routes]]
+url ="parties"
+controleur = "controlleur/parties.py"   
+template = "parties.html"
+
+[[routes]]
+url = "classements"
+controleur = "controlleur/classements.py"
+template = "classements.html"

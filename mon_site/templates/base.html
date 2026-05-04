@@ -1,0 +1,28 @@
+<!-- Auteurs : GERGES Robin, RAONIMANANA Aaron -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BatNav Cards{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo-batnav.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        {% include 'header.html' %}
+        {% include 'menu.html' %}
+
+        <main class="page-content">
+            {% block content %}
+            <section class="content-card">
+                <h1>Bienvenue sur BatNav Cards</h1>
+                <p>Ce contenu sera remplacé par les pages enfants.</p>
+            </section>
+            {% endblock %}
+        </main>
+
+        {% include 'footer.html' %}
+    </div>
+</body>
+</html>
